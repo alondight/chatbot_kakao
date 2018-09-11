@@ -14,6 +14,6 @@ app.get('/keyboard',function(req,res) {
 });
 
 
-http.createServer(app).listen(80,function() {
+http.createServer(app).listen(9090,function() {
 	 console.log('서버 실행 중');
 });
