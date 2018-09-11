@@ -1,10 +1,15 @@
-'use strict'
-
 const express = require('express');
-const http = require('http');
 const app = express();
 
 
+app.set('port', (process.env.PORT || 5000));
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.get('/', function(req, res) {
+    res.send('안녕하세요!ㅎㅎ THE SMC 입니다. ');
+})
 app.get('/keyboard',function(req,res) {
 	var data = {
 		'type' : 'buttons',
@@ -13,7 +18,6 @@ app.get('/keyboard',function(req,res) {
 	res.json(data);
 });
 
-
-http.createServer(app).listen(9090,function() {
-	 console.log('서버 실행 중');
-});
+app.listen(app.get('port'), function() {
+    console.log('running on port', app.get('port'));
+})
