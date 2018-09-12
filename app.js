@@ -1,68 +1,94 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
+//네이버 TTS 용 패키지 웹 요청 용
+var request = require('request');
 
+//카카오톡 파싱용 패키지
+var bodyParser = require('body-parser');
+//웹 패키지
+var express    = require('express');
+var app        = express();
 
-app.set('port', (process.env.PORT || 5000));
-app.use(bodyParser.urlencoded({ extended: false }));
+//네이버 KEY
+var client_id = '4llx1v40PJUPIF17onr0';
+var client_secret = 'ueaLOwMhjx';
+
+var api_url = 'https://openapi.naver.com/v1/papago/n2mt';
+
+// parse application/json
 app.use(bodyParser.json());
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
 
 
-//request test
-app.get('/keyboard',function(req,res) {
-	var data = {
-		'type' : 'buttons',
-		'buttons' : ['퀴즈이벤트']
-	};
-	res.json(data);
+//초기 상태 get '시작'' 버튼으로 시작
+app.get('/keyboard', function(req, res){
+  const menu = {
+      "type": 'buttons',
+      "buttons": ["시작"]
+  };
+
+  res.set({
+      'content-type': 'application/json'
+  }).send(JSON.stringify(menu));
 });
 
-//response
-app.post('/message',function(req , res) {
-	var msg = req.body.content;
-	console.log("전달받은 메시지: "+ msg);
+//카톡 메시지 처리
+app.post('/message',function (req, res) {
 
-	var send = {}; //response data
+    const _obj = {
+        user_key: req.body.user_key,
+        type: req.body.type,
+        content: req.body.content
+    };
+    //카톡으로 받은 메시지
+    console.log(_obj.content)
 
-	switch(msg){
+    /// 네이버 번역기 전송할 데이터 만들기
+    var options = {
+       url: api_url,
+      //한국어(source : ko) > 영어 (target : en ), 카톡에서 받은 메시지(text)
+       form: {'source':'ko', 'target':'en', 'text':req.body.content},
+       headers: {'X-Naver-Client-Id':client_id, 'X-Naver-Client-Secret': client_secret}
+    };
 
-		case'퀴즈이벤트':
-		send = 
-			{
-			  "message": {
-				"text": "퀴즈 이벤트 참여 이벤트입니다.",
-				"photo": {
-				  "url": "https://thesmc.co.kr/wp-content/uploads/2018/07/%EB%A9%94%EC%9D%B8-%EC%8D%B8.jpg",
-				  "width": 618,
-				  "height": 378
-				},
-				"message_button": {
-				  "label": "퀴즈 이벤트 참여하기",
-				  "url": "https://thesmc.co.kr"
-				}
-			  },
-			  "keyboard": {
-				"type": "buttons",
-				"buttons": [
-				  "처음으로",
-				  "동의",
-				  "동의안함"
-				]
-			  }
-			}
+     //네이버로 번역하기 위해 전송(post)
+     request.post(options, function (error, response, body) {
+      //번역이 성공하였다면.
+      if (!error && response.statusCode == 200) {
+        //json 파싱
+        var objBody = JSON.parse(response.body);
+        //번역된 메시지
+        console.log(objBody.message.result.translatedText);
 
-		break;
+        //카톡으로 번역된 메시지를 전송하기 위한 메시지
+        let massage = {
+            "message": {
+                "text": objBody.message.result.translatedText
+            },
+        };
+        //카톡에 메시지 전송
+        res.set({
+            'content-type': 'application/json'
+        }).send(JSON.stringify(massage));
 
-	};
+      } else {
+        //네이버에서 메시지 에러 발생
+        res.status(response.statusCode).end();
+        console.log('error = ' + response.statusCode);
 
+        let massage = {
+            "message": {
+                "text": response.statusCode
+            },
+        };
+        //카톡에 메시지 전송 에러 메시지
+        res.set({
+            'content-type': 'application/json'
+        }).send(JSON.stringify(massage));
 
-	res.json(send);
+      }
+    });
 });
 
-
-
-
-//server running
-app.listen(app.get('port'), function() {
-    console.log('running on port', app.get('port'));
-})
+//9000포트 서버 ON
+app.listen(9000, function() {
+});
