@@ -40,7 +40,7 @@ app.post('/message',function (req, res) {
         content: req.body.content
     };
     //카톡으로 받은 메시지
-    console.log(_obj.content)
+    console.log(_obj.content) 
 
     /// 네이버 번역기 전송할 데이터 만들기
     var options = {
