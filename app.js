@@ -90,5 +90,5 @@ app.post('/message',function (req, res) {
 });
 
 //5000포트 서버 ON
-app.listen(process.env.PORT || 5000, function() {
+app.listen(3000, function() {
 });
